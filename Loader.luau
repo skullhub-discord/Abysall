@@ -35,7 +35,7 @@ if Abysall.Environment.writefile and Abysall.Environment.readfile then
     if not Abysall.Environment.isfile("Abysall/UserData.json") then
         local Data = {
             TotalExecutions = 0,
-            UILibrary = "Obsidian"
+            UILibrary = "Linoria"
         }
         Abysall.Environment.writefile("Abysall/UserData.json", Services.HttpService:JSONEncode(Data))
     end
@@ -49,7 +49,7 @@ if Abysall.Environment.writefile and Abysall.Environment.readfile then
     Decoded.TotalExecutions = Decoded.TotalExecutions + 1
 
     if not Decoded.UILibrary then
-        Decoded.UILibrary = "Obsidian"
+        Decoded.UILibrary = "Linoria"
     end
 
     Abysall.TotalExecutions = Decoded.TotalExecutions
