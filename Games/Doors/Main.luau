@@ -1004,8 +1004,8 @@ Functions.GetRandomCode = function()
 end
 
 local Window = Library:CreateWindow({
-	Title = "Abysall Hub",
-	Footer = "dsc.gg/abysallhub",
+	Title = "Vinehook",
+	Footer = "discord.gg/3FA9VEzDhp",
 	NotifySide = "Right",
 	ShowCustomCursor = false,
 	AutoShow = true,
