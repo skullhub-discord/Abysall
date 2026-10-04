@@ -37,6 +37,12 @@ local AntiScribbles_Connection = nil
 local WaterParts = {}
 local WaterConnection = nil
 
+-- Orbit dropped items state
+local OrbitDroppedItemsConnection
+local OrbitDroppedItemsAngle = 0
+local OrbitDroppedItemsLastTeleport = 0
+local OrbitDroppedItemsPauseUntil = 0
+
 local Objects = {
 	Prompts = {},
 	Objectives = {},
@@ -767,6 +773,7 @@ local Tabs = {
 	Exploits = Window:AddTab("Exploits", "shield"),
 	Visuals  = Window:AddTab("Visuals", "eye"),
 	Floors   = Window:AddTab("Floors", "earth"),
+	Troll    = Window:AddTab("Troll", "rbxassetid://86658668660424"),
 }
 
 Groupboxes.General_Character = Tabs.General:AddLeftGroupbox("Character")
@@ -925,7 +932,6 @@ Groupboxes.Exploits_Bypass:AddToggle("BypassSnare", { Text = "Bypass Snare", Def
 Groupboxes.Exploits_Bypass:AddToggle("BypassBanana", { Text = "Bypass Banana", Default = false, Tooltip = "Prevents 'Banana Peel' from slipping you up (sometimes doesn't work)." })
 Groupboxes.Exploits_Bypass:AddToggle("BypassJeff", { Text = "Bypass Jeff", Default = false, Tooltip = "Prevents 'Jeff the Killer' from stabbing you (sometimes doesn't work)." })
 
--- ===== Archives bypasses =====
 Groupboxes.Exploits_Bypass:AddDivider()
 Groupboxes.Exploits_Bypass:AddToggle("BypassWater", { Text = "Bypass Electric Water", Default = false, Tooltip = "Prevents electric water from hurting you." })
 Groupboxes.Exploits_Bypass:AddToggle("BypassAlma", { Text = "Bypass Alma", Default = false, Tooltip = "Prevents 'Alma' from spawning." })
@@ -1370,7 +1376,6 @@ Groupboxes.Exploits_Teleport:AddButton({
 
 Groupboxes.Exploits_Teleport:AddDivider()
 
--- Auto Hotel toggles
 Toggles.AutoHotel = Groupboxes.Exploits_Teleport:AddToggle("AutoHotel", {
 	Text = "Auto Hotel",
 	Tooltip = "Automatically progresses through the hotel floor.",
@@ -1383,7 +1388,6 @@ Toggles.AutoHotelIgnoreEntities = Groupboxes.Exploits_Teleport:AddToggle("AutoHo
 	Default = false
 })
 
--- Auto Hotel implementation
 local AutoHotelConnection
 local AutoHotelLibraryConnection
 local AutoHotelLibraryRoomConnection
@@ -1682,6 +1686,116 @@ Toggles.AutoHotel:OnChanged(function(AutoHotelEnabled)
 	end)
 end)
 -- ===== End TP / Auto Hotel =====
+
+-- ===== Troll tab =====
+Groupboxes.Troll_Main = Tabs.Troll:AddLeftGroupbox("Item Trolling")
+
+Groupboxes.Troll_Main:AddToggle("OrbitDroppedItems", {
+	Text = "Orbit Dropped Items",
+	Default = false,
+	Tooltip = "Orbits dropped items around you. Teleports them to you every 10s to prevent despawn."
+})
+
+Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsHeight", {
+	Text = "Height",
+	Default = 2,
+	Min = -20,
+	Max = 20,
+	Rounding = 1,
+	Compact = false,
+	Tooltip = "The height of the orbit."
+})
+
+Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsDistance", {
+	Text = "Distance",
+	Default = 5,
+	Min = 0,
+	Max = 50,
+	Rounding = 1,
+	Compact = false,
+	Tooltip = "The distance of the orbit."
+})
+
+Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsSpeed", {
+	Text = "Speed",
+	Default = 2,
+	Min = 0,
+	Max = 20,
+	Rounding = 1,
+	Compact = false,
+	Tooltip = "The speed of the orbit."
+})
+
+Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
+	if OrbitDroppedItemsConnection then
+		OrbitDroppedItemsConnection:Disconnect()
+		OrbitDroppedItemsConnection = nil
+	end
+	if not OrbitDroppedItemsEnabled then return end
+
+	OrbitDroppedItemsAngle = 0
+	OrbitDroppedItemsLastTeleport = tick()
+	OrbitDroppedItemsPauseUntil = 0
+
+	OrbitDroppedItemsConnection = Services.RunService.Heartbeat:Connect(function(OrbitDroppedItemsDeltaTime)
+		if not LocalPlayer or not LocalPlayer.Character then return end
+
+		local OrbitDroppedItemsHumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		local OrbitDroppedItemsDropsFolder = Services.Workspace:FindFirstChild("Drops")
+
+		if not OrbitDroppedItemsHumanoidRootPart or not OrbitDroppedItemsDropsFolder then return end
+
+		local OrbitDroppedItemsHeightValue = Options.OrbitDroppedItemsHeight.Value
+		local OrbitDroppedItemsDistanceValue = Options.OrbitDroppedItemsDistance.Value
+		local OrbitDroppedItemsSpeedValue = Options.OrbitDroppedItemsSpeed.Value
+		local OrbitDroppedItemsCurrentTime = tick()
+
+		local OrbitDroppedItemsList = {}
+		for _, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsDropsFolder:GetChildren()) do
+			if OrbitDroppedItemsObject:IsA("Model") or OrbitDroppedItemsObject:IsA("BasePart") then
+				OrbitDroppedItemsList[#OrbitDroppedItemsList + 1] = OrbitDroppedItemsObject
+			end
+		end
+
+		local OrbitDroppedItemsCount = #OrbitDroppedItemsList
+		if OrbitDroppedItemsCount == 0 then return end
+
+		if OrbitDroppedItemsCurrentTime - OrbitDroppedItemsLastTeleport >= 10 then
+			OrbitDroppedItemsLastTeleport = OrbitDroppedItemsCurrentTime
+			OrbitDroppedItemsPauseUntil = OrbitDroppedItemsCurrentTime + 2
+
+			local OrbitDroppedItemsCenterPosition = OrbitDroppedItemsHumanoidRootPart.Position
+			for _, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsList) do
+				if OrbitDroppedItemsObject:IsA("Model") then
+					OrbitDroppedItemsObject:PivotTo(CFrame.new(OrbitDroppedItemsCenterPosition))
+				else
+					OrbitDroppedItemsObject.CFrame = CFrame.new(OrbitDroppedItemsCenterPosition)
+				end
+			end
+		end
+
+		if OrbitDroppedItemsCurrentTime < OrbitDroppedItemsPauseUntil then return end
+
+		OrbitDroppedItemsAngle += OrbitDroppedItemsDeltaTime * OrbitDroppedItemsSpeedValue
+
+		for OrbitDroppedItemsIndex, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsList) do
+			local OrbitDroppedItemsObjectAngle = OrbitDroppedItemsAngle + ((OrbitDroppedItemsIndex - 1) / OrbitDroppedItemsCount) * math.pi * 2
+			local OrbitDroppedItemsOffset = Vector3.new(
+				math.cos(OrbitDroppedItemsObjectAngle) * OrbitDroppedItemsDistanceValue,
+				OrbitDroppedItemsHeightValue,
+				math.sin(OrbitDroppedItemsObjectAngle) * OrbitDroppedItemsDistanceValue
+			)
+			local OrbitDroppedItemsPosition = OrbitDroppedItemsHumanoidRootPart.Position + OrbitDroppedItemsOffset
+
+			if OrbitDroppedItemsObject:IsA("Model") then
+				OrbitDroppedItemsObject:PivotTo(CFrame.new(OrbitDroppedItemsPosition))
+			else
+				OrbitDroppedItemsObject.CFrame = CFrame.new(OrbitDroppedItemsPosition)
+			end
+		end
+	end)
+end)
+-- ===== End Troll tab =====
 
 Groupboxes.Visuals_LeftTab = Tabs.Visuals:AddLeftTabbox("Camera / Effects")
 Groupboxes.Visuals_Camera = Groupboxes.Visuals_LeftTab:AddTab("Camera")
@@ -4390,6 +4504,12 @@ Library:OnUnload(function()
 		if WalkedInto and WalkedInto.Parent and originalParent and originalParent.Parent then
 			WalkedInto.Parent = originalParent
 		end
+	end
+
+	-- Orbit cleanup
+	if OrbitDroppedItemsConnection then
+		pcall(function() OrbitDroppedItemsConnection:Disconnect() end)
+		OrbitDroppedItemsConnection = nil
 	end
 
 	for _, Object in Objects.Entities do
