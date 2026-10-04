@@ -36,8 +36,8 @@ end
 task.wait(1)
 
 local Window = Library:CreateWindow({
-    Title = "Abysall Hub",
-    Footer = "dsc.gg/abysallhub",
+    Title = "Vinehook",
+    Footer = "https://discord.gg/Hk6J8VPFMy",
     NotifySide = "Right",
     ShowCustomCursor = false,
     AutoShow = true,
