@@ -769,11 +769,10 @@ local Window = Library:CreateWindow({
 Abysall.Interface.ApplyInfoTab(Window)
 
 local Tabs = {
-	General   = Window:AddTab("General", "house"),
-	Exploits  = Window:AddTab("Exploits", "shield"),
-	Visuals   = Window:AddTab("Visuals", "eye"),
-	Floors    = Window:AddTab("Floors", "earth"),
-	Stairwell = Window:AddTab("Stairwell", "rbxassetid://80017304328364"),
+	General  = Window:AddTab("General", "house"),
+	Exploits = Window:AddTab("Exploits", "shield"),
+	Visuals  = Window:AddTab("Visuals", "eye"),
+	Floors   = Window:AddTab("Floors", "earth"),
 }
 
 Groupboxes.General_Character = Tabs.General:AddLeftGroupbox("Character")
@@ -1683,16 +1682,16 @@ Toggles.AutoHotel:OnChanged(function(AutoHotelEnabled)
 end)
 -- ===== End TP / Auto Hotel =====
 
--- ===== Stairwell tab =====
-Groupboxes.Stairwell_Experimental = Tabs.Stairwell:AddLeftGroupbox("Experimental")
+-- ===== Orbit Items (Exploits tab) =====
+Groupboxes.Exploits_Orbit = Tabs.Exploits:AddRightGroupbox("Orbit Items")
 
-Groupboxes.Stairwell_Experimental:AddToggle("OrbitDroppedItems", {
+Groupboxes.Exploits_Orbit:AddToggle("OrbitDroppedItems", {
 	Text = "Orbit Dropped Items",
 	Default = false,
 	Tooltip = "Orbits dropped items around you. Teleports them to you every 10s to prevent despawn."
 })
 
-Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsHeight", {
+Groupboxes.Exploits_Orbit:AddSlider("OrbitDroppedItemsHeight", {
 	Text = "Height",
 	Default = 2,
 	Min = -20,
@@ -1702,7 +1701,7 @@ Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsHeight", {
 	Tooltip = "The height of the orbit."
 })
 
-Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsDistance", {
+Groupboxes.Exploits_Orbit:AddSlider("OrbitDroppedItemsDistance", {
 	Text = "Distance",
 	Default = 5,
 	Min = 0,
@@ -1712,7 +1711,7 @@ Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsDistance", {
 	Tooltip = "The distance of the orbit."
 })
 
-Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsSpeed", {
+Groupboxes.Exploits_Orbit:AddSlider("OrbitDroppedItemsSpeed", {
 	Text = "Speed",
 	Default = 2,
 	Min = 0,
@@ -1778,7 +1777,7 @@ Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
 		end
 	end)
 end)
--- ===== End Stairwell tab =====
+-- ===== End Orbit Items =====
 
 Groupboxes.Visuals_LeftTab = Tabs.Visuals:AddLeftTabbox("Camera / Effects")
 Groupboxes.Visuals_Camera = Groupboxes.Visuals_LeftTab:AddTab("Camera")
