@@ -29,6 +29,14 @@ local FakePrompts = {}
 local Functions = {}
 local PartProperties = {}
 
+-- Archives bypass state
+local DroneWalkedIntoParents = {}
+local DroneConnection = nil
+local AlmaConnection = nil
+local AntiScribbles_Connection = nil
+local WaterParts = {}
+local WaterConnection = nil
+
 local Objects = {
 	Prompts = {},
 	Objectives = {},
@@ -1265,6 +1273,14 @@ Groupboxes.Exploits_Bypass:AddToggle("BypassSnare",          { Text = "Bypass Sn
 Groupboxes.Exploits_Bypass:AddToggle("BypassBanana",         { Text = "Bypass Banana",           Default = false, Tooltip = "Prevents 'Banana Peel' from slipping you up (sometimes doesn't work)." })
 Groupboxes.Exploits_Bypass:AddToggle("BypassJeff",           { Text = "Bypass Jeff",             Default = false, Tooltip = "Prevents 'Jeff the Killer' from stabbing you (sometimes doesn't work)." })
 
+-- ===== Archives bypasses (added) =====
+Groupboxes.Exploits_Bypass:AddDivider()
+Groupboxes.Exploits_Bypass:AddToggle("BypassWater",    { Text = "Bypass Electric Water", Default = false, Tooltip = "Prevents electric water from hurting you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassAlma",     { Text = "Bypass Alma",           Default = false, Tooltip = "Prevents 'Alma' from spawning." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassDrones",   { Text = "Bypass Drones",         Default = false, Tooltip = "Prevents 'Drones' from attacking you." })
+Groupboxes.Exploits_Bypass:AddToggle("AntiScribbles",  { Text = "Bypass Scribbles",      Default = false, Tooltip = "Prevents 'Scribbles' from attacking you." })
+-- ===== End Archives bypasses =====
+
 Toggles.BypassGiggle:OnChanged(function(Value)
 	for _, Object in Objects.Entities do
 		if Object.Name == "GiggleCeiling" then
@@ -1374,6 +1390,167 @@ Toggles.BypassJeff:OnChanged(function(Value)
 	end
 end)
 
+-- ===== Archives bypasses handlers (added) =====
+Toggles.BypassWater:OnChanged(function(Value)
+	Functions.Notify({ Title = "PositionSpoof Will Break This!." })
+
+	if WaterConnection then
+		WaterConnection:Disconnect()
+		WaterConnection = nil
+	end
+
+	if not Value then
+		for _, WaterBypassPart in pairs(WaterParts) do
+			if WaterBypassPart then
+				WaterBypassPart:Destroy()
+			end
+		end
+		table.clear(WaterParts)
+		return
+	end
+
+	local function ProcessWaterBypassRoom(WaterBypassRoom)
+		if not tonumber(WaterBypassRoom.Name) then
+			return
+		end
+
+		task.wait(3)
+
+		local WaterBypassWater = WaterBypassRoom:FindFirstChild("Water")
+
+		if not WaterBypassWater or WaterParts[WaterBypassWater] then
+			return
+		end
+
+		local WaterBypassPart = Instance.new("Part")
+		WaterBypassPart.Name = "WaterBypass"
+		WaterBypassPart.Anchored = true
+		WaterBypassPart.CanCollide = true
+		WaterBypassPart.CanTouch = false
+		WaterBypassPart.CanQuery = false
+		WaterBypassPart.Transparency = 0.25
+		WaterBypassPart.Color = Color3.fromRGB(0, 150, 255)
+		WaterBypassPart.Material = Enum.Material.ForceField
+
+		if WaterBypassWater:IsA("BasePart") then
+			WaterBypassPart.Size = WaterBypassWater.Size + Vector3.new(0, 0.5, 0)
+			WaterBypassPart.CFrame = WaterBypassWater.CFrame * CFrame.new(0, 0.25, 0)
+		elseif WaterBypassWater:IsA("Model") then
+			local WaterBypassCFrame, WaterBypassSize = WaterBypassWater:GetBoundingBox()
+			WaterBypassPart.Size = WaterBypassSize + Vector3.new(0, 0.5, 0)
+			WaterBypassPart.CFrame = WaterBypassCFrame * CFrame.new(0, 0.25, 0)
+		else
+			WaterBypassPart.Size = Vector3.new(10, 1.5, 10)
+			WaterBypassPart.CFrame = WaterBypassWater:GetPivot() * CFrame.new(0, 0.25, 0)
+		end
+
+		if WaterBypassPart.Size.Y > 3 then
+			WaterBypassPart:Destroy()
+			Functions.Notify({ Title = "Water Bypass removed: Softlock." })
+			return
+		end
+
+		WaterBypassPart.Parent = WaterBypassRoom
+		WaterParts[WaterBypassWater] = WaterBypassPart
+	end
+
+	local LatestRoomNumber = tonumber(LatestRoom.Value) or 0
+
+	for WaterBypassRoomNumber = math.max(0, LatestRoomNumber - 4), LatestRoomNumber do
+		local WaterBypassRoom = CurrentRooms:FindFirstChild(tostring(WaterBypassRoomNumber))
+		if WaterBypassRoom then
+			task.spawn(ProcessWaterBypassRoom, WaterBypassRoom)
+		end
+	end
+
+	WaterConnection = CurrentRooms.ChildAdded:Connect(function(WaterBypassRoom)
+		task.spawn(ProcessWaterBypassRoom, WaterBypassRoom)
+	end)
+end)
+
+Toggles.BypassAlma:OnChanged(function(Value)
+	if AlmaConnection then
+		AlmaConnection:Disconnect()
+		AlmaConnection = nil
+	end
+
+	if not Value then return end
+
+	for _, child in ipairs(Services.Workspace:GetChildren()) do
+		if child.Name == "Alma" then
+			child:Destroy()
+		end
+	end
+
+	AlmaConnection = Services.Workspace.ChildAdded:Connect(function(child)
+		if child.Name == "Alma" and Toggles.BypassAlma.Value then
+			child:Destroy()
+		end
+	end)
+end)
+
+Toggles.BypassDrones:OnChanged(function(Value)
+	local RS = Services.ReplicatedStorage
+
+	local function ProcessDrones(drones)
+		local WalkedInto = drones:FindFirstChild("WalkedInto") or drones:WaitForChild("WalkedInto", 3)
+		if WalkedInto and not DroneWalkedIntoParents[WalkedInto] then
+			DroneWalkedIntoParents[WalkedInto] = drones
+			WalkedInto.Parent = RS
+		end
+	end
+
+	if Value then
+		for _, child in ipairs(Services.Workspace:GetChildren()) do
+			if child.Name == "Drones" then
+				ProcessDrones(child)
+			end
+		end
+
+		if DroneConnection then
+			DroneConnection:Disconnect()
+		end
+		DroneConnection = Services.Workspace.ChildAdded:Connect(function(child)
+			if child.Name == "Drones" and Toggles.BypassDrones.Value then
+				ProcessDrones(child)
+			end
+		end)
+	else
+		for WalkedInto, originalParent in pairs(DroneWalkedIntoParents) do
+			if WalkedInto and WalkedInto.Parent and originalParent and originalParent.Parent then
+				WalkedInto.Parent = originalParent
+			end
+		end
+		table.clear(DroneWalkedIntoParents)
+
+		if DroneConnection then
+			DroneConnection:Disconnect()
+			DroneConnection = nil
+		end
+	end
+end)
+
+Toggles.AntiScribbles:OnChanged(function(Value)
+	if AntiScribbles_Connection then
+		AntiScribbles_Connection:Disconnect()
+		AntiScribbles_Connection = nil
+	end
+
+	if not Value then
+		return
+	end
+
+	AntiScribbles_Connection = Services.Workspace.ChildAdded:Connect(function(Child)
+		if Child.Name == "Scribbles" and Toggles.AntiScribbles.Value then
+			local ExploitSribbleWarning = Child:FindFirstChild("IfYoureExploitingDeleteThis")
+			if ExploitSribbleWarning then
+				ExploitSribbleWarning:Destroy()
+			end
+		end
+	end)
+end)
+-- ===== End Archives bypasses handlers =====
+
 Groupboxes.Exploits_BypassRight = Tabs.Exploits:AddRightGroupbox("Bypass")
 Groupboxes.Exploits_BypassRight:AddToggle("DisableAnticheat", {
 	Text = "Anticheat Bypass", Default = false,
@@ -1413,7 +1590,7 @@ Groupboxes.Exploits_BypassRight:AddDropdown("InfiniteItemsList", {
 	DisabledTooltip = Globals.IncompatibleMessage
 })
 
--- ===== Infinite Crucifix (added) =====
+-- ===== Infinite Crucifix =====
 Groupboxes.Exploits_BypassRight:AddToggle("InfCrucifix", {
 	Text = "Infinite Crucifix",
 	Default = false,
@@ -1639,7 +1816,7 @@ Toggles.RemoveInteractingSounds:OnChanged(function(Value)
 	Globals.MainUI.Initiator.Main_Game.Reminder.Caption.Volume = Value and 0 or 0.1
 end)
 
--- ===== Auto TP Next Door (added) =====
+-- ===== Auto TP Next Door =====
 Groupboxes.Exploits_Teleport = Tabs.Exploits:AddLeftGroupbox("Teleport")
 
 local TpNextDoorConnection
@@ -4160,7 +4337,8 @@ local AllowedInstances = {
 	MovingDoor=true, StardustPickup=true, Hole=true, Groundskeeper=true, MandrakeLive=true,
 	GardenGateButton=true, LotusPetalPickup=true, VineGuillotine=true, LiveEntityBramble=true,
 	RiftSpawn=true, ElevatorBreaker=true, RunnerNodes=true, PathLights=true, DuckBoard=true,
-	Padlock=true, EyestalkEndCutscene=true, MinecartRig=true, SeekMovingNewClone=true
+	Padlock=true, EyestalkEndCutscene=true, MinecartRig=true, SeekMovingNewClone=true,
+	Drones=true, Alma=true, Water=true, Scribbles=true
 }
 
 Functions.QueueObject = function(Object)
@@ -4639,6 +4817,14 @@ Library:OnUnload(function()
 			pcall(function() Key:Disconnect() end)
 			pcall(function() Connection:Disconnect() end)
 		end
+	end
+
+	if WaterConnection then pcall(function() WaterConnection:Disconnect() end) end
+	if AlmaConnection then pcall(function() AlmaConnection:Disconnect() end) end
+	if DroneConnection then pcall(function() DroneConnection:Disconnect() end) end
+	if AntiScribbles_Connection then pcall(function() AntiScribbles_Connection:Disconnect() end) end
+	for _, WaterBypassPart in pairs(WaterParts) do
+		if WaterBypassPart then WaterBypassPart:Destroy() end
 	end
 
 	for _, Object in Objects.Entities do
