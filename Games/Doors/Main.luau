@@ -769,11 +769,11 @@ local Window = Library:CreateWindow({
 Abysall.Interface.ApplyInfoTab(Window)
 
 local Tabs = {
-	General  = Window:AddTab("General", "house"),
-	Exploits = Window:AddTab("Exploits", "shield"),
-	Visuals  = Window:AddTab("Visuals", "eye"),
-	Floors   = Window:AddTab("Floors", "earth"),
-	Troll    = Window:AddTab("Troll", "rbxassetid://86658668660424"),
+	General   = Window:AddTab("General", "house"),
+	Exploits  = Window:AddTab("Exploits", "shield"),
+	Visuals   = Window:AddTab("Visuals", "eye"),
+	Floors    = Window:AddTab("Floors", "earth"),
+	Stairwell = Window:AddTab("Stairwell", "rbxassetid://80017304328364"),
 }
 
 Groupboxes.General_Character = Tabs.General:AddLeftGroupbox("Character")
@@ -1483,13 +1483,9 @@ local function AutoHotelHandleKey(AutoHotelRoomNum)
 		if LocalPlayer.Backpack:FindFirstChild("Key") or (Character and Character:FindFirstChild("Key")) then
 			return true
 		end
-		if Character then
-			Character:PivotTo(AutoHotelKeyObtain:GetPivot())
-		end
+		if Character then Character:PivotTo(AutoHotelKeyObtain:GetPivot()) end
 		for _, AutoHotelDesc in ipairs(AutoHotelKeyObtain:GetDescendants()) do
-			if AutoHotelDesc:IsA("ProximityPrompt") then
-				Functions.FirePrompt(AutoHotelDesc)
-			end
+			if AutoHotelDesc:IsA("ProximityPrompt") then Functions.FirePrompt(AutoHotelDesc) end
 		end
 		task.wait(0.12)
 	end
@@ -1687,16 +1683,16 @@ Toggles.AutoHotel:OnChanged(function(AutoHotelEnabled)
 end)
 -- ===== End TP / Auto Hotel =====
 
--- ===== Troll tab =====
-Groupboxes.Troll_Main = Tabs.Troll:AddLeftGroupbox("Item Trolling")
+-- ===== Stairwell tab =====
+Groupboxes.Stairwell_Experimental = Tabs.Stairwell:AddLeftGroupbox("Experimental")
 
-Groupboxes.Troll_Main:AddToggle("OrbitDroppedItems", {
+Groupboxes.Stairwell_Experimental:AddToggle("OrbitDroppedItems", {
 	Text = "Orbit Dropped Items",
 	Default = false,
 	Tooltip = "Orbits dropped items around you. Teleports them to you every 10s to prevent despawn."
 })
 
-Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsHeight", {
+Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsHeight", {
 	Text = "Height",
 	Default = 2,
 	Min = -20,
@@ -1706,7 +1702,7 @@ Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsHeight", {
 	Tooltip = "The height of the orbit."
 })
 
-Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsDistance", {
+Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsDistance", {
 	Text = "Distance",
 	Default = 5,
 	Min = 0,
@@ -1716,7 +1712,7 @@ Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsDistance", {
 	Tooltip = "The distance of the orbit."
 })
 
-Groupboxes.Troll_Main:AddSlider("OrbitDroppedItemsSpeed", {
+Groupboxes.Stairwell_Experimental:AddSlider("OrbitDroppedItemsSpeed", {
 	Text = "Speed",
 	Default = 2,
 	Min = 0,
@@ -1732,38 +1728,29 @@ Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
 		OrbitDroppedItemsConnection = nil
 	end
 	if not OrbitDroppedItemsEnabled then return end
-
 	OrbitDroppedItemsAngle = 0
 	OrbitDroppedItemsLastTeleport = tick()
 	OrbitDroppedItemsPauseUntil = 0
-
 	OrbitDroppedItemsConnection = Services.RunService.Heartbeat:Connect(function(OrbitDroppedItemsDeltaTime)
 		if not LocalPlayer or not LocalPlayer.Character then return end
-
 		local OrbitDroppedItemsHumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 		local OrbitDroppedItemsDropsFolder = Services.Workspace:FindFirstChild("Drops")
-
 		if not OrbitDroppedItemsHumanoidRootPart or not OrbitDroppedItemsDropsFolder then return end
-
 		local OrbitDroppedItemsHeightValue = Options.OrbitDroppedItemsHeight.Value
 		local OrbitDroppedItemsDistanceValue = Options.OrbitDroppedItemsDistance.Value
 		local OrbitDroppedItemsSpeedValue = Options.OrbitDroppedItemsSpeed.Value
 		local OrbitDroppedItemsCurrentTime = tick()
-
 		local OrbitDroppedItemsList = {}
 		for _, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsDropsFolder:GetChildren()) do
 			if OrbitDroppedItemsObject:IsA("Model") or OrbitDroppedItemsObject:IsA("BasePart") then
 				OrbitDroppedItemsList[#OrbitDroppedItemsList + 1] = OrbitDroppedItemsObject
 			end
 		end
-
 		local OrbitDroppedItemsCount = #OrbitDroppedItemsList
 		if OrbitDroppedItemsCount == 0 then return end
-
 		if OrbitDroppedItemsCurrentTime - OrbitDroppedItemsLastTeleport >= 10 then
 			OrbitDroppedItemsLastTeleport = OrbitDroppedItemsCurrentTime
 			OrbitDroppedItemsPauseUntil = OrbitDroppedItemsCurrentTime + 2
-
 			local OrbitDroppedItemsCenterPosition = OrbitDroppedItemsHumanoidRootPart.Position
 			for _, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsList) do
 				if OrbitDroppedItemsObject:IsA("Model") then
@@ -1773,11 +1760,8 @@ Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
 				end
 			end
 		end
-
 		if OrbitDroppedItemsCurrentTime < OrbitDroppedItemsPauseUntil then return end
-
 		OrbitDroppedItemsAngle += OrbitDroppedItemsDeltaTime * OrbitDroppedItemsSpeedValue
-
 		for OrbitDroppedItemsIndex, OrbitDroppedItemsObject in ipairs(OrbitDroppedItemsList) do
 			local OrbitDroppedItemsObjectAngle = OrbitDroppedItemsAngle + ((OrbitDroppedItemsIndex - 1) / OrbitDroppedItemsCount) * math.pi * 2
 			local OrbitDroppedItemsOffset = Vector3.new(
@@ -1786,7 +1770,6 @@ Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
 				math.sin(OrbitDroppedItemsObjectAngle) * OrbitDroppedItemsDistanceValue
 			)
 			local OrbitDroppedItemsPosition = OrbitDroppedItemsHumanoidRootPart.Position + OrbitDroppedItemsOffset
-
 			if OrbitDroppedItemsObject:IsA("Model") then
 				OrbitDroppedItemsObject:PivotTo(CFrame.new(OrbitDroppedItemsPosition))
 			else
@@ -1795,7 +1778,7 @@ Toggles.OrbitDroppedItems:OnChanged(function(OrbitDroppedItemsEnabled)
 		end
 	end)
 end)
--- ===== End Troll tab =====
+-- ===== End Stairwell tab =====
 
 Groupboxes.Visuals_LeftTab = Tabs.Visuals:AddLeftTabbox("Camera / Effects")
 Groupboxes.Visuals_Camera = Groupboxes.Visuals_LeftTab:AddTab("Camera")
