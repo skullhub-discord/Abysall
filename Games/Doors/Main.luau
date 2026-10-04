@@ -1639,6 +1639,82 @@ Toggles.RemoveInteractingSounds:OnChanged(function(Value)
 	Globals.MainUI.Initiator.Main_Game.Reminder.Caption.Volume = Value and 0 or 0.1
 end)
 
+-- ===== Auto TP Next Door (added) =====
+Groupboxes.Exploits_Teleport = Tabs.Exploits:AddLeftGroupbox("Teleport")
+
+local TpNextDoorConnection
+
+local function getNextClosedDoor()
+	if not Character then return nil end
+
+	local GameDataFolder = Services.ReplicatedStorage:FindFirstChild("GameData")
+	if not GameDataFolder then return nil end
+
+	local LatestRoomValue = GameDataFolder:FindFirstChild("LatestRoom")
+	if not LatestRoomValue then return nil end
+
+	local startRoom = LatestRoomValue.Value
+	local bestDoor = nil
+	local bestNumber = math.huge
+
+	for _, obj in ipairs(Services.Workspace:GetDescendants()) do
+		if obj.Name == "Door" and obj:IsA("Model") then
+			local openAttr = obj:GetAttribute("Open")
+			if openAttr == false or openAttr == nil then
+				local roomModel = obj.Parent
+				local roomNum = tonumber(roomModel and roomModel.Name)
+
+				if roomNum and roomNum >= startRoom and roomNum < bestNumber then
+					bestNumber = roomNum
+					bestDoor = obj
+				end
+			end
+		end
+	end
+
+	return bestDoor
+end
+
+Groupboxes.Exploits_Teleport:AddButton({
+	Text = "Tp Next Door",
+	Tooltip = "Teleports you to the next sequential unopened door.",
+	Func = function()
+		local door = getNextClosedDoor()
+		if door and Character then
+			Character:PivotTo(door:GetPivot())
+		end
+	end
+})
+
+Groupboxes.Exploits_Teleport:AddToggle("TpNextDoor", {
+	Text = "Auto Tp Next Door",
+	Tooltip = "Continuously teleports you to the next sequential unopened door.",
+	Default = false
+})
+
+Toggles.TpNextDoor:OnChanged(function(TpNextDoorEnabled)
+	if TpNextDoorConnection then
+		task.cancel(TpNextDoorConnection)
+		TpNextDoorConnection = nil
+	end
+
+	if not TpNextDoorEnabled then
+		return
+	end
+
+	TpNextDoorConnection = task.spawn(function()
+		while Toggles.TpNextDoor.Value do
+			local door = getNextClosedDoor()
+			if door and Character then
+				Character:PivotTo(door:GetPivot())
+			end
+			task.wait(0.15)
+		end
+		TpNextDoorConnection = nil
+	end)
+end)
+-- ===== End Auto TP Next Door =====
+
 Groupboxes.Visuals_LeftTab = Tabs.Visuals:AddLeftTabbox("Camera / Effects")
 Groupboxes.Visuals_Camera = Groupboxes.Visuals_LeftTab:AddTab("Camera")
 Groupboxes.Visuals_Camera:AddToggle("AmbientToggle", { Text = "Ambient", Default = false, Tooltip = "Changes the lighting color to the specified value." })
