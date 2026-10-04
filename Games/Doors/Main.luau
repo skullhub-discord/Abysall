@@ -1413,6 +1413,101 @@ Groupboxes.Exploits_BypassRight:AddDropdown("InfiniteItemsList", {
 	DisabledTooltip = Globals.IncompatibleMessage
 })
 
+-- ===== Infinite Crucifix (added) =====
+Groupboxes.Exploits_BypassRight:AddToggle("InfCrucifix", {
+	Text = "Infinite Crucifix",
+	Default = false,
+	Tooltip = "Risky! You can die or lose the Crucifix. Recommended to have low ping and stable fps.",
+	Risky = Floor ~= "Ballz",
+})
+
+local InfCrucifixDropTable = {
+	RushMoving   = 54,
+	AmbushMoving = 67,
+	A60          = 70,
+	GlitchRush   = 120,
+	GlitchAmbush = 155,
+	A120         = 75,
+}
+
+local InfCrucifixConnection
+
+Toggles.InfCrucifix:OnChanged(function(Value)
+	if InfCrucifixConnection then
+		InfCrucifixConnection:Disconnect()
+		InfCrucifixConnection = nil
+	end
+
+	if not Value then return end
+
+	local InfCrucifixRaycastParams = RaycastParams.new()
+	InfCrucifixRaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+	InfCrucifixConnection = Services.RunService.RenderStepped:Connect(function()
+		if not Toggles.InfCrucifix.Value then
+			if InfCrucifixConnection then
+				InfCrucifixConnection:Disconnect()
+				InfCrucifixConnection = nil
+			end
+			return
+		end
+
+		if not Character or not CollisionPart then return end
+
+		InfCrucifixRaycastParams.FilterDescendantsInstances = { Character }
+
+		for _, InfCrucifixEntity in ipairs(Services.Workspace:GetChildren()) do
+			local InfCrucifixMaxDistance = InfCrucifixDropTable[InfCrucifixEntity.Name]
+			if not InfCrucifixMaxDistance or not InfCrucifixEntity.PrimaryPart then
+				continue
+			end
+
+			InfCrucifixEntity.PrimaryPart.CanCollide = true
+			InfCrucifixEntity.PrimaryPart.CanQuery = true
+
+			local InfCrucifixOrigin = CollisionPart.Position
+			local InfCrucifixDirection = InfCrucifixEntity.PrimaryPart.Position - InfCrucifixOrigin
+			local InfCrucifixRayResult = Services.Workspace:Raycast(InfCrucifixOrigin, InfCrucifixDirection, InfCrucifixRaycastParams)
+
+			if not InfCrucifixRayResult or not InfCrucifixRayResult.Instance:IsDescendantOf(InfCrucifixEntity) then
+				continue
+			end
+
+			local InfCrucifixDistance = (CollisionPart.Position - InfCrucifixEntity.PrimaryPart.Position).Magnitude
+			if InfCrucifixDistance >= InfCrucifixMaxDistance then
+				continue
+			end
+
+			local InfCrucifixTool = Character:FindFirstChildOfClass("Tool")
+			if not InfCrucifixTool or InfCrucifixTool.Name ~= "Crucifix" then
+				continue
+			end
+
+			task.spawn(function()
+				local DropItemRemote = RemotesFolder:FindFirstChild("DropItem")
+				if DropItemRemote then
+					DropItemRemote:FireServer(InfCrucifixTool)
+				end
+				task.wait(0.54)
+
+				local InfCrucifixDrops = Services.Workspace:FindFirstChild("Drops")
+				if not InfCrucifixDrops then return end
+
+				local InfCrucifixDropped = InfCrucifixDrops:FindFirstChild("Crucifix")
+				if not InfCrucifixDropped then return end
+
+				local InfCrucifixPrompt = InfCrucifixDropped:FindFirstChildOfClass("ProximityPrompt")
+				if InfCrucifixPrompt then
+					Functions.FirePrompt(InfCrucifixPrompt)
+				end
+			end)
+
+			task.wait(0.6)
+		end
+	end)
+end)
+-- ===== End Infinite Crucifix =====
+
 Groupboxes.Exploits_BypassRight:AddDivider()
 Groupboxes.Exploits_BypassRight:AddToggle("PositionSpoof", {
 	Text = "Position Spoof", Default = false,
